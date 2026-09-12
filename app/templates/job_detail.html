@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ job.title }} · ResumeRank AI
+{% endblock %}
+
+{% block top_title %}
+Candidate ranking
+{% endblock %}
+
+
+{% block content %}
+
+<div class="page-head">
+
+    <div>
+
+        <div class="eyebrow">
+            Role intelligence
+        </div>
+
+        <h1 class="page-title">
+            {{ job.title }}
+        </h1>
+
+        <p class="page-subtitle">
+            {{ job.description }}
+        </p>
+
+
+        <div class="job-meta">
+
+            <span>
+                <i class="bi bi-clock"></i>
+
+                {{ job.min_experience or 0 }}+ years
+            </span>
+
+            <span>
+                <i class="bi bi-people"></i>
+
+                {{ applications|length }}
+                candidates
+            </span>
+
+            <span>
+                <i class="bi bi-stars"></i>
+
+                AI scored
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="actions">
+
+        <!-- EDIT JOB -->
+
+        <a class="btn btn-outline-primary"
+           href="{{ url_for('jobs.edit_job', job_id=job.id) }}">
+
+            <i class="bi bi-pencil-square"></i>
+
+            Edit Job
+
+        </a>
+
+
+        <!-- DELETE JOB -->
+
+        <form method="post"
+              action="{{ url_for('jobs.delete_job', job_id=job.id) }}"
+              onsubmit="return confirm('Delete this job and all its candidate matches?');">
+
+            <button class="btn btn-outline-danger">
+
+                <i class="bi bi-trash3"></i>
+
+                Delete Job
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- JOB REQUIREMENTS -->
+
+<div class="row g-3 mb-4">
+
+    <div class="col-md-6">
+
+        <div class="card p-4 h-100">
+
+            <h5 class="mb-3">
+                <i class="bi bi-check-circle me-2"></i>
+                Required Skills
+            </h5>
+
+            {% if job.required_skills %}
+
+                {% for skill in job.required_skills.split(',') %}
+
+                    {% if skill.strip() %}
+
+                        <span class="badge badge-skill">
+                            {{ skill.strip() }}
+                        </span>
+
+                    {% endif %}
+
+                {% endfor %}
+
+            {% else %}
+
+                <span class="section-muted">
+                    No required skills specified.
+                </span>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <div class="col-md-6">
+
+        <div class="card p-4 h-100">
+
+            <h5 class="mb-3">
+                <i class="bi bi-star me-2"></i>
+                Preferred Skills
+            </h5>
+
+            {% if job.preferred_skills %}
+
+                {% for skill in job.preferred_skills.split(',') %}
+
+                    {% if skill.strip() %}
+
+                        <span class="badge badge-skill">
+                            {{ skill.strip() }}
+                        </span>
+
+                    {% endif %}
+
+                {% endfor %}
+
+            {% else %}
+
+                <span class="section-muted">
+                    No preferred skills specified.
+                </span>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- CANDIDATE RANKING -->
+
+<div class="card section-card">
+
+    <div class="section-head">
+
+        <div>
+
+            <h3 class="section-title">
+                Candidate ranking
+            </h3>
+
+            <div class="section-muted">
+                Highest match scores first
+            </div>
+
+        </div>
+
+
+        <span class="score-pill">
+
+            <i class="bi bi-stars"></i>
+
+            {{ applications|length }}
+            ranked
+
+        </span>
+
+    </div>
+
+
+    <div class="table-wrap">
+
+        <table class="table">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Rank
+                    </th>
+
+                    <th>
+                        Candidate
+                    </th>
+
+                    <th>
+                        Match score
+                    </th>
+
+                    <th>
+                        Matched skills
+                    </th>
+
+                    <th>
+                        Missing
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                    <th></th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+            {% for a in applications %}
+
+                <tr>
+
+                    <td>
+                        <strong>
+                            #{{ loop.index }}
+                        </strong>
+                    </td>
+
+
+                    <td>
+
+                        <div class="candidate-cell">
+
+                            <div class="candidate-avatar">
+
+                                {{ (a.candidate.name or 'C')[:1]|upper }}
+
+                            </div>
+
+
+                            <div>
+
+                                <div class="candidate-name">
+
+                                    {{ a.candidate.name }}
+
+                                </div>
+
+                                <div class="candidate-meta">
+
+                                    {{ a.candidate.email or 'No email' }}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="score-pill">
+
+                            {{ '%.1f'|format(a.match_score) }}%
+
+                        </span>
+
+
+                        <div class="progress mt-2"
+                             style="width:120px">
+
+                            <div class="progress-bar"
+                                 style="width:{{ a.match_score }}%">
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+
+                    <td style="max-width:220px">
+
+                        {{ a.matched_skills or '—' }}
+
+                    </td>
+
+
+                    <td style="max-width:180px;color:#64748b">
+
+                        {{ a.missing_skills or '—' }}
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="status-pill {{ a.status|lower|replace(' ','-') }}">
+
+                            {{ a.status }}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <a class="btn btn-sm btn-outline-secondary"
+                           href="{{ url_for('resumes.detail', candidate_id=a.candidate.id) }}">
+
+                            View
+
+                            <i class="bi bi-arrow-up-right"></i>
+
+                        </a>
+
+                    </td>
+
+                </tr>
+
+            {% else %}
+
+                <tr>
+
+                    <td colspan="7">
+
+                        <div class="empty">
+
+                            <i class="bi bi-people"></i>
+
+                            No candidates have been evaluated for this role yet.
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}
